@@ -1,17 +1,14 @@
 package com.retrofit.retrofitdemo.http;
 
-import android.app.Activity;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.retrofit.retrofitdemo.ApiService;
 import com.retrofit.retrofitdemo.AppAplication;
+import com.retrofit.retrofitdemo.BaseActivity;
 import com.retrofit.retrofitdemo.bean.BaseBean;
 import com.retrofit.retrofitdemo.util.ApkUtils;
-
-import org.reactivestreams.Subscription;
 
 import java.io.File;
 import java.io.IOException;
@@ -46,11 +43,8 @@ public class RetrofitUtil {
     public static Gson gson;
     public static Retrofit retrofit;
     public static OkHttpClient.Builder client;
-    private static AlertDialog alertDialog;
-    public static Activity context;
-    private static Subscription sub;
-
-    public static ApiService getApiService(Activity activity) {
+    public static BaseActivity context;
+    public static ApiService getApiService(BaseActivity activity) {
         context = activity;
         return getApiService();
     }
@@ -65,27 +59,6 @@ public class RetrofitUtil {
         }
 
         return retrofit.create(ApiService.class);
-    }
-
-    public static void showDialog(Activity activity) {
-        alertDialog = new AlertDialog.Builder(activity)
-                .setTitle("标题")
-                .setMessage("这是一个加载对话框")
-                .setOnCancelListener(dialogInterface -> {
-                    //在取消对话框的时候同时取消网络请求
-                    dialogInterface.dismiss();
-                    if (sub != null) {
-                       sub.cancel();
-                    }
-                }).create();
-        alertDialog.setCanceledOnTouchOutside(false);
-        alertDialog.show();
-    }
-
-    public static void dismissDialog() {
-        if (alertDialog != null) {
-            alertDialog.dismiss();
-        }
     }
 
     /**
@@ -235,22 +208,27 @@ public class RetrofitUtil {
                     })
                     .doOnSubscribe(subscription -> {
                         //  TODO 在这里弹出加载进度dialog
-                        sub=subscription;
                         if (context != null) {
-                            showDialog(context);
+                            context.showDialog(subscription);
                         }
                     })
                     .doOnComplete(() -> {
-                        dismissDialog();
+                        if (context != null) {
+                           context. dismissDialog();
+                        }
                         Log.i(TAG, "onComplete: ");
                     })
                     .doOnError(throwable -> {
                                 Log.i(TAG, "获取失败: ");
-                                dismissDialog();
+                        if (context != null) {
+                            context. dismissDialog();
+                        }
                     })
                     .doOnCancel(() -> {
                         Log.i(TAG, "取消订阅: ");
-                        dismissDialog();
+                        if (context != null) {
+                            context. dismissDialog();
+                        }
                     });
         };
         return flowableTransformer;
